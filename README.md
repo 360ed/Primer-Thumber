@@ -16,9 +16,9 @@ You're going to want to fire this up on a server somewhere, my preference being 
 
 sudo apt-get install libjpeg8 libjpeg62-dev libfreetype6 libfreetype6-dev
 
-sudo ln -s /usr/lib/x86_64-linux-gnu/libjpeg.so /usr/lib
-sudo ln -s /usr/lib/x86_64-linux-gnu/libfreetype.so /usr/lib
-sudo ln -s /usr/lib/x86_64-linux-gnu/libz.so /usr/lib
+sudo ln -s /usr/lib/x86_64-linux-gnu/libjpeg.so /usr/lib<br/>
+sudo ln -s /usr/lib/x86_64-linux-gnu/libfreetype.so /usr/lib<br/>
+sudo ln -s /usr/lib/x86_64-linux-gnu/libz.so /usr/lib<br/>
 
 After those libs are installed, you can install the Python requirements listed in requirements.txt manually, or use the pip shortcut. sudo pip install -r requirements.txt
 
