@@ -35,7 +35,7 @@ width: An int width for the image
 height: An int height for the image
 src: The Amazon S3 path to your image. Obviously, the Thumber server must have write priveleges to this particular S3 account.
 
-<img src="http://your-thumber-url-or-ip.com/?width=100&height=100&src=https://s3.amazonaws.com/my-bucket/my-image.png"/>
+&lt;img src="http://your-thumber-url-or-ip.com/?width=100&height=100&src=https://s3.amazonaws.com/my-bucket/my-image.png"/&gt;
 
 
 How it works
