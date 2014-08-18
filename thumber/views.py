@@ -49,13 +49,17 @@ def thumb(request):
         # put the thumbs in a dir called _thumber
         thumb_path = '/%s/_thumber/%s' % ('/'.join(parts[4:-1]), thumb_name)
 
+        response = None
+
         # check to see if our thumb exists with a head request
-        try:
-            #response = urllib2.urlopen(HeadRequest(thumb_src))
-            response = grequests.map([grequests.head(thumb_src)])
-        #except urllib2.HTTPError:
-        except Exception:
+        def exception_handler(req, exception):
+            global response
             response = None
+
+        #response = urllib2.urlopen(HeadRequest(thumb_src))
+        response = grequests.map(
+            [grequests.head(thumb_src)],
+            exception_handler=exception_handler)
 
         # PROCESS THE IMAGE HERE
         # handle the image being missing
@@ -64,14 +68,17 @@ def thumb(request):
 
             # setup a place to store the local file and download it
             local_thumb_path = 'tmp/' + filename
-            try:
-                #image = urllib2.urlopen(src)
-                image = grequests.map([grequests.get(src)])
-            #except urllib2.HTTPError, e:
-            except Exception, e:
+
+            def exception_handler_image(req, exception):
                 logger.debug("Image does not exist")
-                logger.exception(e)
+                logger.exception(exception)
                 raise Http404
+
+                #image = urllib2.urlopen(src)
+            image = grequests.map(
+                [grequests.get(src)],
+                exception_handler=exception_handler_image)
+            #except urllib2.HTTPError, e:
 
             # write out the file
             with open(local_thumb_path, 'wb') as f:
