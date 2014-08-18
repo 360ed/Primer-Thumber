@@ -3,3 +3,6 @@ Pillow==2.5.3
 boto==2.32.1
 django-storages==1.1.8
 wsgiref==0.1.2
+gevent==1.0.1
+gunicorn==19.1.1
+grequests==0.2.0
