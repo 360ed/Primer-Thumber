@@ -52,14 +52,17 @@ def thumb(request):
         response = None
 
         # check to see if our thumb exists with a head request
-        def exception_handler(req, exception):
+        def exception_handle(req, exception):
             global response
             response = None
 
         #response = urllib2.urlopen(HeadRequest(thumb_src))
         response = grequests.map(
             [grequests.head(thumb_src)],
-            exception_handler=exception_handler)
+        )
+
+        if response[0].status_code >= 400:
+            response = None
 
         # PROCESS THE IMAGE HERE
         # handle the image being missing
@@ -76,8 +79,8 @@ def thumb(request):
 
                 #image = urllib2.urlopen(src)
             image = grequests.map(
-                [grequests.get(src)],
-                exception_handler=exception_handler_image)
+                [grequests.get(src)]
+                )
             #except urllib2.HTTPError, e:
 
             # write out the file
