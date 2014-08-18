@@ -1,14 +1,20 @@
-import urllib2
+import logging
+#import urllib2
+#from eventlet.green import urllib2
 import os
 
+import grequests
+
 from django.shortcuts import redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.conf import settings
 
 from PIL import Image
 
 from storages.backends.s3boto import S3BotoStorage
 from boto.s3.key import Key
+
+logger = logging.getLogger(__name__)
 
 
 def thumb(request):
@@ -19,9 +25,7 @@ def thumb(request):
     src = request.GET.get('src')
 
     # only continue if they passed a source
-    
     if src:
-
         # the parts of our url
         parts = src.split('/')
 
@@ -38,18 +42,20 @@ def thumb(request):
         ext = filename.split('.')[-1]
 
         # create a thumbname for the image
-        thumb_name = '%s_thumber_%s_%s.%s' % (''.join( filename.split('.')[0:-1] ), width, height, ext)    
-        thumb_src =  '%s/_thumber/%s' % ('/'.join(parts[0:-1]), thumb_name)
-        
+        thumb_name = '%s_thumber_%s_%s.%s' % (
+            ''.join(filename.split('.')[0:-1]), width, height, ext)
+        thumb_src = '%s/_thumber/%s' % ('/'.join(parts[0:-1]), thumb_name)
+
         # put the thumbs in a dir called _thumber
-        thumb_path = '/%s/_thumber/%s' %  ('/'.join(parts[4:-1]), thumb_name)
+        thumb_path = '/%s/_thumber/%s' % ('/'.join(parts[4:-1]), thumb_name)
 
         # check to see if our thumb exists with a head request
         try:
-            response = urllib2.urlopen(HeadRequest(thumb_src))
-        except urllib2.HTTPError:
+            #response = urllib2.urlopen(HeadRequest(thumb_src))
+            response = grequests.map([grequests.head(thumb_src)])
+        #except urllib2.HTTPError:
+        except Exception:
             response = None
-            pass
 
         # PROCESS THE IMAGE HERE
         # handle the image being missing
@@ -58,15 +64,22 @@ def thumb(request):
 
             # setup a place to store the local file and download it
             local_thumb_path = 'tmp/' + filename
-            image = urllib2.urlopen(src)
+            try:
+                #image = urllib2.urlopen(src)
+                image = grequests.map([grequests.get(src)])
+            #except urllib2.HTTPError, e:
+            except Exception, e:
+                logger.debug("Image does not exist")
+                logger.exception(e)
+                raise Http404
 
             # write out the file
             with open(local_thumb_path, 'wb') as f:
-                f.write(image.read())
+                f.write(image[0].read())
 
             # do the resizing, save our image
             image = Image.open(local_thumb_path)
-            image = image.resize(( width, height ), Image.ANTIALIAS)
+            image = image.resize((width, height), Image.ANTIALIAS)
             image.save(local_thumb_path)
 
             # send it back to where it came from
@@ -88,20 +101,12 @@ def upload_image(local_file_path, external_file_path, bucket):
     storage = S3BotoStorage()
     conn = storage.connection
     bucket = conn.get_bucket(bucket)
-    
+
     # new key for bucket
     k = Key(bucket)
     k.key = external_file_path
     k.set_contents_from_filename(local_file_path)
     k.set_acl('public-read')
-    
+
     # remove the tmp file
     os.remove(local_file_path)
-
-
-class HeadRequest(urllib2.Request):
-    """
-    A class for doing head requests only
-    """
-    def get_method(self):
-        return "HEAD"
